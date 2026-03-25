@@ -610,12 +610,27 @@ describe('docker-manager', () => {
       expect(env.AWF_SSL_BUMP_ENABLED).toBeUndefined();
     });
 
-    it('should set NO_COLOR=1 to disable ANSI color output from CLI tools', () => {
+    it('should set FORCE_COLOR, COLUMNS, and TERM for color output without TTY', () => {
       const result = generateDockerCompose(mockConfig, mockNetworkConfig);
       const agent = result.services.agent;
       const env = agent.environment as Record<string, string>;
 
+      expect(env.FORCE_COLOR).toBe('1');
+      expect(env.COLUMNS).toBe('120');
+      expect(env.TERM).toBe('xterm-256color');
+      expect(env.NO_COLOR).toBeUndefined();
+    });
+
+    it('should set NO_COLOR when noColor is true', () => {
+      const noColorConfig = { ...mockConfig, noColor: true };
+      const result = generateDockerCompose(noColorConfig, mockNetworkConfig);
+      const agent = result.services.agent;
+      const env = agent.environment as Record<string, string>;
+
       expect(env.NO_COLOR).toBe('1');
+      expect(env.FORCE_COLOR).toBeUndefined();
+      expect(env.COLUMNS).toBe('120');
+      expect(env.TERM).toBe('xterm-256color');
     });
 
     it('should mount required volumes in agent container (default behavior)', () => {
